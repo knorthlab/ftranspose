@@ -4,14 +4,20 @@
  *
  * LICENSE: freely distribute, modify, compile... please retain authorship
  *
- * v1.0 - Chris Wood - Initial
- * v1.1 - Chris Wood - fix issue where last line char is a delimiter
- * v1.2 - Chris Wood - add check for field length overrun
- * v1.3 - Chris Wood - allow custom element width
- *                   - ask for less memory if realloc fails
- *                     (may just post-pone the inevitable)
- *
+ * v1.0 - Initial
+ * v1.1 - fix issue where last line char is a delimiter
+ * v1.2 - add check for field length overrun
+ * v1.3 - allow custom element width (-f option)
+ *      - ask for less memory if realloc fails
+ 
+ * v1.4 - Antoine Baldassari: baldassa@email.unc.edu
+ *      - allows piping: reads from stdin if -i is missing, and writes to stdout 
+ *	  	if -o is missing. 
+ *		- truncates data elements to fit size limit (20 bytes by default, or specified 
+ *	  	with -f) instead of crashing. This helps with indel polymorphisms which take
+ *	  	hundred of bytes lot of space to spell out.
  */
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -164,8 +170,10 @@ array_t *read_array( char delim, char *filename, int element_size )
     char *e;
     int c;
 
-
-    if ( (fp = fopen(filename, "r")) == (FILE *)0 )
+	if (filename[0] == '\0') {
+		if ((fp = stdin) == NULL) usage(EXIT_FAILURE);
+	}
+	else  if ( (fp = fopen(filename, "r")) == (FILE *)0 )
     {
         perror( filename );
 		return;
@@ -182,8 +190,16 @@ array_t *read_array( char delim, char *filename, int element_size )
     i = 0;
     while( (c = fgetc(fp)) != EOF )
     {
+		/* seek to end of field if reached size limit*/
+		if ( ! ( (c == delim) || (c == '\n') || (c == EOF) ) && i >= a->element_size )
+		{
+			fprintf( stderr, "element @[%ld,%ld] size exceeded\n", a->rows, col);
+			while ((c = fgetc(fp)) != '\n' && c != EOF && c != delim);
+			i = a->element_size - 1;
+        }	
+			
         /* end of a data element */
-        if ( (c == delim) || (c == '\n') )
+        if ( (c == delim) || (c == '\n') || (c == EOF) )
         {
             if ( i > 0 )
             {
@@ -195,7 +211,7 @@ array_t *read_array( char delim, char *filename, int element_size )
             }
 
             /* end of a row */
-            if ( c == '\n' )
+            if ( c == '\n')
             {	
                 a->rows++;
 
@@ -217,17 +233,8 @@ array_t *read_array( char delim, char *filename, int element_size )
             /* reset data element char index */
             i = 0;
         }
-        else
-        {
-            /* just another character of a data element */
-            if ( i >= a->element_size )
-            {
-                fprintf( stderr, "element @[%ld,%ld] size exceeded: %d > %d.  use -f %d\n",
-                                 a->rows, col, i+1, a->element_size, i+1);
-                exit( EXIT_FAILURE );
-            }
-            e[i++] = c;
-        }
+		/* write to buffer */
+        else e[i++] = c;
     }
 
     if ( args.verbosity >= 1 )
@@ -250,7 +257,10 @@ void write_array_transposed( array_t *a, char *filename, char delim )
     if ( a == (array_t *)0 )
         return;
 
-    if ( (fp = fopen(filename, "w")) == (FILE *)0 )
+	if (filename[0] == '\0') {
+		if ((fp = stdout) == (FILE*)0) usage(EXIT_FAILURE);
+	}
+	else  if ( (fp = fopen(filename, "w")) == (FILE *)0 )
     {
         perror( filename );
 		return;
@@ -337,11 +347,8 @@ int main( int argc, char *argv[] )
         }
     }
 
-    if ( (args.in_filename[0] == '\0') || 
-         (args.out_filename[0] == '\0') )
-    {
-        usage( EXIT_FAILURE );
-    }
+	if (args.in_filename[0] == '\0' && stdin == NULL) usage(EXIT_FAILURE);
+	if (args.out_filename[0] == '\0' && stdout == NULL) usage(EXIT_FAILURE);
 
     if ( args.verbosity >= 2 )
     {
