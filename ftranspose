@@ -4,18 +4,15 @@
  *
  * LICENSE: freely distribute, modify, compile... please retain authorship
  *
- * v1.0 - Initial
- * v1.1 - fix issue where last line char is a delimiter
- * v1.2 - add check for field length overrun
- * v1.3 - allow custom element width (-f option)
+ * v1.0 - Chris Wood - Initial
+ * v1.1 - Chris Wood - fix issue where last line char is a delimiter
+ * v1.2 - Chris Wood - add check for field length overrun
+ * v1.3 - Chris Wood - allow custom element width (-f option)
  *      - ask for less memory if realloc fails
  
  * v1.4 - Antoine Baldassari: baldassa@email.unc.edu
- *      - allows piping: reads from stdin if -i is missing, and writes to stdout 
- *	  	if -o is missing. 
- *		- truncates data elements to fit size limit (20 bytes by default, or specified 
- *	  	with -f) instead of crashing. This helps with indel polymorphisms which take
- *	  	hundred of bytes lot of space to spell out.
+ *      - allows piping 
+ *		- truncates data elements to fit size limit
  */
  
 #include <stdio.h>
