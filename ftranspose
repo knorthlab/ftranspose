@@ -347,8 +347,9 @@ int main( int argc, char *argv[] )
         }
     }
 
-	if (args.in_filename[0] == '\0' && stdin == NULL) usage(EXIT_FAILURE);
-	if (args.out_filename[0] == '\0' && stdout == NULL) usage(EXIT_FAILURE);
+	// Need to check stdin/out or add keyword
+	// if (args.in_filename[0] == '\0' && stdin == NULL) usage(EXIT_FAILURE);
+	// if (args.out_filename[0] == '\0' && stdout == NULL) usage(EXIT_FAILURE);
 
     if ( args.verbosity >= 2 )
     {
