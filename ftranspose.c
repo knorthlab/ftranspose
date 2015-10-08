@@ -12,7 +12,7 @@
  
  * v1.4 - Antoine Baldassari: baldassa@email.unc.edu
  *      - allows piping 
- *		- truncates data elements to fit size limit
+ *      - truncates data elements to fit size limit
  */
  
 #include <stdio.h>
@@ -22,6 +22,8 @@
 
 #define ARG_STR_LEN            512
 #define DEFAULT_FIELD_LENGTH   20
+#define BACKSLASH 92
+#define TAB 9
 
 #define VERSION_STR   "1.3"
 
@@ -321,12 +323,26 @@ int main( int argc, char *argv[] )
         case 'f':
             args.element_size = atoi(optarg);
             break;
-        case 'd':
-            args.in_delim = *optarg;
-            break;
-        case 'D':
-            args.out_delim = *optarg;
-            break;
+	case 'd':
+		if(strlen(optarg) == 1) args.in_delim = *optarg;
+		if(strlen(optarg) > 1) 
+			if(optarg[1] == 't' && *optarg == BACKSLASH) args.in_delim = TAB;
+		if(!args.in_delim)
+		{
+			fprintf(stderr, "Error: invalid input delimiter: %s\n", optarg);
+			usage( EXIT_FAILURE );
+		}
+		break;
+	case 'D':
+		if(strlen(optarg) == 1) args.out_delim = *optarg;
+		if(strlen(optarg) > 1) 
+			if(optarg[1] == 't' && *optarg == BACKSLASH) args.out_delim = TAB;
+		if(!args.out_delim)
+		{
+			fprintf(stderr, "Error: invalid output delimiter: %s\n", optarg);
+			usage( EXIT_FAILURE );
+		}
+		break;
         case 'i':
             strncpy(args.in_filename, optarg, ARG_STR_LEN);
             args.in_filename[ ARG_STR_LEN - 1 ] = '\0';
@@ -343,10 +359,14 @@ int main( int argc, char *argv[] )
             break;
         }
     }
+    if(args.verbosity > 0 && !args.out_filename[0])
+    {
+	fprintf(stderr, " verbosity setting overriden to 0 to preserve stdout\n");
+	args.verbosity = 0;
+    }
 
-	// Need to check stdin/out or add keyword
-	// if (args.in_filename[0] == '\0' && stdin == NULL) usage(EXIT_FAILURE);
-	// if (args.out_filename[0] == '\0' && stdout == NULL) usage(EXIT_FAILURE);
+	//if (args.in_filename[0] == '\0' && stdin == NULL) usage(EXIT_FAILURE);
+	//if (args.out_filename[0] == '\0' && stdout == NULL) usage(EXIT_FAILURE);
 
     if ( args.verbosity >= 2 )
     {
