@@ -4,7 +4,7 @@ Quickly transpose a large delimited file
 
 ## Installation
 
-The source code was written in the C89 dialect, which probably will need to be specified to the compiler, e.g. `--std=c89` with GCC.  
+The source code was written in the C89 dialect, which will need to be specified to the compiler, e.g. `--std=c89` with GCC.  
 
 ## Usage
 
